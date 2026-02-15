@@ -103,7 +103,9 @@ class Status(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         guild = self.bot.get_guild(GUILD_ID)
-        starboard_channel = discord.utils.get(guild.text_channels, name="rose-server-status")
+        status_channel = discord.utils.get(guild.text_channels, name="rose-server-status")
+        if not status_channel:
+            return
         while True:
             await asyncio.sleep(STATUS_MONITOR_REFRESH)
             monitors = await self._get_all_monitors()
@@ -113,20 +115,19 @@ class Status(commands.Cog):
                         async with session.get(monitor.url) as response:
                             if str(response.status).startswith("5") or str(response.status).startswith("4"):
                                 if not monitor.is_down:
-                                    embed = discord.Embed(color=discord.Color.red(), title=f"{monitor.name} is down!", description="Request failed with status code: "+str(response.status))
-                                    await starboard_channel.send(embed=embed)
+                                    embed = discord.Embed(color=discord.Color.red(), title=f"{monitor.name} is down!", description=f"Request failed with status code: {response.status}")
+                                    await status_channel.send(embed=embed)
                                     await self._monitor_go_down(monitor)
                             else:
                                 if monitor.is_down:
                                     embed = discord.Embed(color=discord.Color.green(), title=f"{monitor.name} is up!", description=f"Downtime duration: {humanize.time.naturaldelta(timezone.now() - monitor.downtime_start)}")
-                                    await starboard_channel.send(embed=embed)
+                                    await status_channel.send(embed=embed)
                                     await self._monitor_up(monitor)
                     except Exception as e:
                         if not monitor.is_down:
-                            embed = discord.Embed(color=discord.Color.red(), title=f"{monitor.name} is down!", description="Request failed with exception: "+str(e))
-                            await starboard_channel.send(embed=embed)
+                            embed = discord.Embed(color=discord.Color.red(), title=f"{monitor.name} is down!", description=f"Request failed with exception: {e}")
+                            await status_channel.send(embed=embed)
                             await self._monitor_go_down(monitor)
-
 
 def setup(bot):
     bot.add_cog(Status(bot))
