@@ -496,11 +496,12 @@ class Starboard(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         """Auto-add star to new starboard entries"""
-        if message.channel.name == "starboard" and message.author == self.bot.user:
-            try:
-                await message.add_reaction("⭐")
-            except:
-                pass
+        if type(message.channel) != discord.DMChannel:
+            if message.channel.name == "starboard" and message.author == self.bot.user:
+                try:
+                    await message.add_reaction("⭐")
+                except:
+                    pass
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):

@@ -21,8 +21,11 @@ class Status(commands.Cog):
             return None
         
     @sync_to_async
-    def _update_monitor(self, monitor: StatusMonitor, url: str):
-        monitor.url = url
+    def _update_monitor(self, monitor: StatusMonitor, new_name: str, url: str):
+        if new_name:
+            monitor.name = new_name
+        if url:
+            monitor.url = url
         monitor.save()
 
     @sync_to_async
@@ -48,11 +51,10 @@ class Status(commands.Cog):
     def _get_all_monitors(name: str):
         return list(StatusMonitor.objects.all())
 
-    status_monitor = discord.SlashCommandGroup("status_monitor", "Status Monitor commands")
+    status_monitor = discord.SlashCommandGroup("status_monitor", "Status Monitor commands", guild_ids=[GUILD_ID])
 
     @status_monitor.command(name="add", description="Add a status monitor")
     @discord.default_permissions(administrator=True)
-    @commands.guild_only()
     async def add_status_monitor(self, ctx, name: discord.Option(str), url: discord.Option(str)):
         parsed = urlparse(url)
         if not parsed.netloc or not parsed.scheme:
@@ -66,22 +68,24 @@ class Status(commands.Cog):
     
     @status_monitor.command(name="edit", description="Edit a status monitor")
     @discord.default_permissions(administrator=True)
-    @commands.guild_only()
-    async def edit_status_monitor(self, ctx, monitor_name: discord.Option(str), url: discord.Option(str)):
+    async def edit_status_monitor(self, ctx, monitor_name: discord.Option(str), new_name: discord.Option(str, required=False), url: discord.Option(str, required=False)):
+        if not new_name and not url:
+            await ctx.respond("Nothing to change.")
+            return
         monitor = await self._get_monitor(monitor_name)
         if not monitor:
             await ctx.respond(f"No monitor exists with the name `{monitor_name}`.")
             return
-        parsed = urlparse(url)
-        if not parsed.netloc or not parsed.scheme:
-            await ctx.respond("You have not set a valid URL.")
-            return
-        await self._update_monitor(monitor, url)
+        if url:
+            parsed = urlparse(url)
+            if not parsed.netloc or not parsed.scheme:
+                await ctx.respond("You have not set a valid URL.")
+                return
+        await self._update_monitor(monitor, new_name, url)
         await ctx.respond(f"Updated monitor `{monitor_name}`.")
     
     @status_monitor.command(name="delete", description="Delete a status monitor")
     @discord.default_permissions(administrator=True)
-    @commands.guild_only()
     async def remove_status_monitor(self, ctx, monitor_name: discord.Option(str)):
         monitor = await self._get_monitor(monitor_name)
         if not monitor:
@@ -92,7 +96,6 @@ class Status(commands.Cog):
     
     @status_monitor.command(name="list", description="List all status monitors")
     @discord.default_permissions(administrator=True)
-    @commands.guild_only()
     async def list_status_monitor(self, ctx):
         monitors = await self._get_all_monitors()
         embed = discord.Embed(title="List of monitors")
