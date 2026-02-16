@@ -14,5 +14,10 @@ class Miscellaneous(commands.Cog):
             messages = ["david j sosa best developer on the planet.", "use tvii", "67", "it's 10 pm do you know where your tvii is?", "What the fuck", "I hate my job", "use roséverse", "mods can we ban this guy?", "god I wish I was a Wii U sometimes"]
             await ctx.channel.send(choice(messages))
 
+    @commands.slash_command(description="Returns the bot's latency in milliseconds")
+    async def ping(self, ctx):
+        latency = self.bot.latency * 1000
+        await ctx.respond(f"Pong! `{latency:.2f} ms` 🏓")
+
 def setup(bot):
     bot.add_cog(Miscellaneous(bot))
