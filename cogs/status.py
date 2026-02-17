@@ -4,7 +4,13 @@ from db.models import StatusMonitor
 from datetime import datetime
 from django.utils import timezone
 from urllib.parse import urlparse
-import discord, asyncio, os, aiohttp, humanize, http, time
+import discord
+import asyncio
+import os
+import aiohttp
+import humanize
+import http
+import time
 
 GUILD_ID = int(os.getenv("GUILD_ID"))
 STATUS_MONITOR_REFRESH = int(os.getenv("STATUS_MONITOR_REFRESH"))

@@ -1,18 +1,27 @@
 from discord.ext import commands
 from random import choice, randint
 import discord
+import asyncio
+import json
 
 class Miscellaneous(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.random_messages = json.load(open("data/random_messages.json", "r"))
     
     @commands.Cog.listener()
     async def on_message(self, ctx):
         if self.bot.user.id == ctx.author.id:
             return
         if randint(0,512)==268:
-            messages = ["david j sosa best developer on the planet.", "use tvii", "67", "it's 10 pm do you know where your tvii is?", "What the fuck", "I hate my job", "use roséverse", "mods can we ban this guy?", "god I wish I was a Wii U sometimes"]
-            await ctx.channel.send(choice(messages))
+            await ctx.channel.send(choice(self.random_messages))
+        
+    @commands.Cog.listener()
+    async def on_ready(self):
+        wiiu_games = json.load(open("data/wiiu_games.json"))
+        while True:
+            await self.bot.change_presence(activity=discord.Game(choice(wiiu_games)))
+            await asyncio.sleep(300)
 
     @commands.slash_command(description="Returns the bot's latency in milliseconds")
     async def ping(self, ctx):

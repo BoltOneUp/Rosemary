@@ -1,9 +1,9 @@
-import discord
 from discord.ext import commands
-import os
-import logging
 from asgiref.sync import sync_to_async
 from db.models import StarboardMessage
+import discord
+import os
+import logging
 
 STAR_THRESHOLD = int(os.getenv("STAR_THRESHOLD"))  # Change how many ⭐ are required
 GUILD_ID = int(os.getenv("GUILD_ID"))

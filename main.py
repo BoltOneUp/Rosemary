@@ -1,20 +1,18 @@
-import os
-import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 import manage
+import os
+import discord
 
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 GUILD_ID = int(os.getenv("GUILD_ID"))
 
-game_activity = discord.Game(name=os.getenv("STATUS"))
 intents = discord.Intents.default()
 intents.members = True # Example for member access
 intents.message_content = True
 intents.presences = True
 bot = commands.Bot(
-    activity=game_activity, 
     status=discord.Status.online,
     intents=intents
 )
