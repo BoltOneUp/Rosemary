@@ -56,13 +56,9 @@ def encrypt_mii_data_for_qr_code(data: bytearray, key: bytes) -> bytes:
     nonce[0:WRAPPED_ID_LENGTH] = wrapped_id
 
     # Encrypt the padded content using the ID as nonce (IV).
-    cipher = AES.new(qr_code_key, AES.MODE_CCM, nonce=bytes(nonce), mac_len=WRAPPED_TAG_LENGTH)
+    cipher = AES.new(key, AES.MODE_CCM, nonce=bytes(nonce), mac_len=TAG_LENGTH)
     encrypted_bytes = cipher.encrypt(bytes(content))
     tag = cipher.digest()
-
-    # Remove extra padding: encrypted bytes include padding that needs trimming.
-    #correct_encrypted_content_length = (len(encrypted_bytes) - WRAPPED_ID_LENGTH - WRAPPED_TAG_LENGTH)
-    #encrypted_content_corrected = encrypted_bytes[:correct_encrypted_content_length]
 
     # Construct result: nonce + encrypted content + tag.
     result = wrapped_id + encrypted_bytes + tag
@@ -83,13 +79,13 @@ def update_mii_checksum(mii_data):
     # set uint16 number
     mii_data[94] = (crc >> 8) & 0xFF
     mii_data[95] = crc & 0xFF
-    # print(f"crc hex: {mii_data[94]:x} {mii_data[95]:x}")
+
 def set_favorite_color(mii_data: bytearray, favorite_color):
     # set favoriteColor bitfield
     mii_data[0x19] = mii_data[0x19] & 0xc3 | (favorite_color & 0xf) * 4
 
-def make_mii_qr_code(raw_mii_data: bytearray, favorite_color: int = -1) -> io.BytesIO:
-    if favorite_color != -1: # only set clothes color if value is not -1
+def make_mii_qr_code(raw_mii_data: bytearray, favorite_color: int|None = None) -> io.BytesIO:
+    if favorite_color is not None: # only set clothes color if value is not None
         set_favorite_color(raw_mii_data, favorite_color)
 
     update_mii_checksum(raw_mii_data)
@@ -176,8 +172,8 @@ class Mii(commands.Cog):
         discord.OptionChoice("Dark blue", "blue"),
         discord.OptionChoice("Gold", "gold")
     ], required=False)
-    @discord.option("pnid", description="Pretendo Network ID to get the Mii from. Leave blank if using Nintendo NNID.", required=False)
-    @discord.option("nnid", description="Nintendo Network ID to get the Mii from. Leave blank if using Pretendo PNID.", required=False)
+    @discord.option("pnid", description="Pretendo Network ID to get the Mii from. Leave blank if using NNID.", required=False)
+    @discord.option("nnid", description="Nintendo Network ID to get the Mii from. Leave blank if using PNID.", required=False)
     async def mii(
         self,
         ctx: discord.ApplicationContext,
@@ -223,11 +219,9 @@ class Mii(commands.Cog):
 
             # the index is the name of the color, e.g. black = 11
             favorite_color_string_table = [ "red", "orange", "yellow", "yellowgreen", "green", "blue", "skyblue", "pink", "purple", "brown", "white", "black"]
-            favorite_color_int = -1
+            favorite_color_int = None
             if clothes_color: # if clothes color is specified, parse from string
                 favorite_color_int = favorite_color_string_table.index(clothes_color)
-                #except ValueError:
-                #favorite_color_int = -1 # invalid value, will be ignored
 
             qr_buffer = make_mii_qr_code(raw_mii_data, favorite_color_int)
 
