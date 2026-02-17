@@ -6,7 +6,7 @@ import json
 
 class Miscellaneous(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: discord.Bot = bot
         self.random_messages = json.load(open("data/random_messages.json", "r"))
     
     @commands.Cog.listener()
@@ -18,7 +18,7 @@ class Miscellaneous(commands.Cog):
         
     @commands.Cog.listener()
     async def on_ready(self):
-        wiiu_games = json.load(open("data/wiiu_games.json"))
+        wiiu_games = json.load(open("data/wiiu_games.json", "r"))
         while True:
             await self.bot.change_presence(activity=discord.Game(choice(wiiu_games)))
             await asyncio.sleep(300)

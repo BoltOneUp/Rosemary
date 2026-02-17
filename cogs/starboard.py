@@ -10,7 +10,7 @@ GUILD_ID = int(os.getenv("GUILD_ID"))
 
 class Starboard(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: discord.Bot = bot
         self.logger = logging.getLogger(__name__)
 
     # ------------------------

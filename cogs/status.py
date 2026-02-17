@@ -17,7 +17,7 @@ STATUS_MONITOR_REFRESH = int(os.getenv("STATUS_MONITOR_REFRESH"))
 
 class Status(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: discord.Bot = bot
     
     @sync_to_async
     def _get_monitor(self, name: str):

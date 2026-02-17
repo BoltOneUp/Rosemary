@@ -1,11 +1,11 @@
+from Crypto.Cipher import AES
+from discord.ext import commands
+import discord
 import io
 import base64
 import qrcode
-from Crypto.Cipher import AES
 import aiohttp
-
-from discord.ext import commands
-import discord
+import os
 
 # helper functions
 def crc16_ccitt(data: bytearray):
@@ -34,26 +34,26 @@ def encrypt_mii_data_for_qr_code(data: bytearray, key: bytes) -> bytes:
     """
 
     VER3_STORE_DATA_LENGTH = 96   # 3DS/Wii U Mii StoreData
-    WRAPPED_ID_OFFSET = 12        # Offset of CreateID in StoreData
-    WRAPPED_ID_LENGTH = 8         # Length of CreateID used for nonce
-    WRAPPED_TAG_LENGTH = 16       # AES-CCM tag length
-    WRAPPED_NONCE_LENGTH = 12     # AES-CCM nonce length
+    ID_OFFSET = 12        # Offset of CreateID in StoreData
+    ID_LENGTH = 8         # Length of CreateID used for nonce
+    TAG_LENGTH = 16       # AES-CCM tag length
+    NONCE_LENGTH = 12     # AES-CCM nonce length
 
     if len(data) != VER3_STORE_DATA_LENGTH:
         raise ValueError(f"encrypt_aes_ccm: Input size is {len(data)}, expected {VER3_STORE_DATA_LENGTH}")
 
     # The ID to include in the encrypted data as the nonce (IV).
-    id_end_offset = WRAPPED_ID_OFFSET + WRAPPED_ID_LENGTH
-    wrapped_id = bytes(data[WRAPPED_ID_OFFSET:id_end_offset])
+    id_end_offset = ID_OFFSET + ID_LENGTH
+    id = bytes(data[ID_OFFSET:id_end_offset])
 
     # Content to be encrypted: data with ID cut out, padded with 8 zeros.
     content = bytearray(VER3_STORE_DATA_LENGTH)
-    content[0:WRAPPED_ID_OFFSET] = data[0:WRAPPED_ID_OFFSET]
-    content[WRAPPED_ID_OFFSET:] = data[id_end_offset:]
+    content[0:ID_OFFSET] = data[0:ID_OFFSET]
+    content[ID_OFFSET:] = data[id_end_offset:]
 
     # AES-CCM nonce initialized to zeroes with ID at the start.
-    nonce = bytearray(WRAPPED_NONCE_LENGTH)
-    nonce[0:WRAPPED_ID_LENGTH] = wrapped_id
+    nonce = bytearray(NONCE_LENGTH)
+    nonce[0:ID_LENGTH] = id
 
     # Encrypt the padded content using the ID as nonce (IV).
     cipher = AES.new(key, AES.MODE_CCM, nonce=bytes(nonce), mac_len=TAG_LENGTH)
@@ -61,7 +61,7 @@ def encrypt_mii_data_for_qr_code(data: bytearray, key: bytes) -> bytes:
     tag = cipher.digest()
 
     # Construct result: nonce + encrypted content + tag.
-    result = wrapped_id + encrypted_bytes + tag
+    result = id + encrypted_bytes + tag
     return result
 
 # Reference for 3DS/Wii U format Mii data: https://github.com/Genwald/MiiPort/blob/4ee38bbb8aa68a2365e9c48d59d7709f760f9b5d/include/mii_ext.h#L170-L264
@@ -104,12 +104,12 @@ def make_mii_qr_code(raw_mii_data: bytearray, favorite_color: int|None = None) -
 
 # main routine
 
-rendering_endpoint = "https://mii-unsecure.ariankordi.net/miis/image.png"
-nnid_lookup_endpoint = "https://mii-unsecure.ariankordi.net/mii_data/"
+rendering_endpoint = os.getenv("RENDERING_ENDPOINT")
+nnid_lookup_endpoint = os.getenv("NNID_LOOKUP_ENDPOINT")
 
 class Mii(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: discord.Bot = bot
 
     @commands.slash_command(description="Render a Mii with Arian's Mii Renderer REAL")
     @discord.option("render", description="Select the render style", choices=[
