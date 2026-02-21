@@ -39,7 +39,7 @@ class Wiki(commands.Cog):
     @wiki.command(name="list", description="List of wiki pages")
     async def wiki_list(self, ctx):
         pages = await self._get_all_wiki_pages()
-        embed = discord.Embed(color=discord.Color.blue(), title="List of wiki pages", description="Use /wiki show (short name) or .w (short name) to show a wiki page.")
+        embed = discord.Embed(color=discord.Color.blue(), title="List of wiki pages", description="Use /wiki show (short name) or !(short name) to show a wiki page.")
         for page in pages:
             embed.add_field(name=page.short_name, value=page.name, inline=False)
         await ctx.respond(embed=embed)
