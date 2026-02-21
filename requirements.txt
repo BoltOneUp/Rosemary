@@ -8,3 +8,4 @@ pycryptodome==3.17
 qrcode[PIL]==8.2
 legacy-cgi; python_version >= '3.13'
 audioop-lts; python_version>='3.13'
+requests==2.31.0
