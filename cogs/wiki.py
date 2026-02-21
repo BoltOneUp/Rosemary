@@ -20,20 +20,22 @@ class Wiki(commands.Cog):
     def _get_all_wiki_pages(self):
         return list(WikiPage.objects.all())
     
-    async def show_page(self, short_name):
+    async def show_page(self, short_name, show_not_found):
         page = await self._get_wiki_page(short_name)
         if page:
             embed = discord.Embed(color=discord.Color.blue(), title=page.name, description=page.content)
             embed.set_footer(text=f"Last modified: {time.strftime("%d/%m/%Y %H:%M:%S", page.last_modified.timetuple())}")
-        else:
+        elif show_not_found:
             embed = discord.Embed(color=discord.Color.red(), title="Page not found", description="Could not find wiki page with short name "+short_name+".")
+        else:
+            return None
         return embed
 
     wiki = discord.SlashCommandGroup("wiki", "Wiki commands")
 
     @wiki.command(name="show", description="Show a wiki page.")
     async def wiki_show(self, ctx, short_name: discord.Option(str)):
-        embed = await self.show_page(short_name)
+        embed = await self.show_page(short_name, True)
         await ctx.respond(embed=embed)
     
     @wiki.command(name="list", description="List of wiki pages")
@@ -52,11 +54,9 @@ class Wiki(commands.Cog):
                 if len(message) > 1:
                     # avoid accidental commands
                     return
-                try:
-                    embed = await self.show_page(message[0].replace("!", ""))
+                embed = await self.show_page(message[0].replace("!", ""), False)
+                if embed:
                     await ctx.reply(embed=embed, mention_author=False)
-                except IndexError:
-                    await ctx.channel.send("Not enough arguments.")
 
 def setup(bot):
     bot.add_cog(Wiki(bot))
